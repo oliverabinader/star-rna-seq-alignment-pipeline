@@ -53,6 +53,8 @@ elif [ "$MODE" == "align" ]; then
 
     echo "Step 2: Running STAR alignment..."
 
+    STAR --genomeLoad LoadAndExit --genomeDir ...
+    
     STAR --runThreadN 20 \
          --runMode alignReads \
          --genomeLoad LoadAndKeep \
@@ -61,6 +63,8 @@ elif [ "$MODE" == "align" ]; then
          --outSAMtype BAM SortedByCoordinate \
          --limitBAMsortRAM 20000000000 \
          --outFileNamePrefix "$OUT_PREFIX"
+
+    STAR --genomeLoad Remove --genomeDir ...
 
     echo "Alignment complete."
 
@@ -92,7 +96,11 @@ elif [ "$MODE" == "postprocess" ]; then
         I="$BAM" \
         O="$OUT_BAM" \
         M="$METRICS" \
-        --REMOVE_DUPLICATES true
+        --REMOVE_DUPLICATES true && \
+        
+    samtools index $out && picard CollectAlignmentSummaryMetrics -I $bam -R RCh38.p13_genomic.fna -O $aln_met && 
+    
+    echo "Completed de-duplicating and indexing $bam"'
 
     ####################################################
     # 3.3 Convert BAM to SAM (optional inspection)
@@ -124,3 +132,23 @@ else
     echo "Invalid mode. Use: index | align | postprocess"
     exit 1
 fi
+
+
+this next stepo could be a seprate downstream thing in rna seq 
+IGV plots
+	•	Filter reads from original BAM files aligning to mitochondria (it becomes mitochondrial filtering only if the BED file contains mitochondrial regions)
+ls *.bam | parallel -j 10 'in={} out=${in%.bam}_mito.bam; samtools view -L GCF_000001405.39_GRCh38.p13_genomic.mito.bed -b $in -o $out && \
+echo "Completed filtering mito reads for $in"' 
+	•	Index BAM files (ls *_mito.bam | parallel -j 16 ‘samtools index {}’) 
+	•	Copy resulting BAM and BAI files into local 
+	•	Go to IGV browser and upload the BAM files as tracks
+
+
+This extracts only reads from BAM files that align to chromosome 21 using the RefSeq chromosome identifier (NC_000021.9), 
+and saves them as separate BAM files for visualization or downstream analysis (e.g., IGV).
+command 
+ls *.bam | parallel -j 10 '
+in={}
+out=${in%.bam}_chr21.bam
+samtools view -h "$in" NC_000021.9 | samtools view -bS - > chr21/"$out"
+'
