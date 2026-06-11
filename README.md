@@ -98,7 +98,7 @@ Outputs:
 * BED files
 
 
-# 5. Gene-Level Quantification
+# 5. Gene-Coverage Quantification
 
 Read coverage is calculated against annotated gene regions.
 
