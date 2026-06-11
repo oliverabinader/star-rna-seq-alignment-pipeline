@@ -1,96 +1,157 @@
-# Author: Oliver Abinader
+# STAR RNA-seq Alignment and Visualization Pipeline
+
+**Author:** Oliver Abinader
+
+A reproducible workflow for bulk RNA-seq analysis using the STAR aligner. This repository covers genome indexing, read alignment, BAM post-processing, duplicate removal, gene-level quantification, and visualization-oriented BAM extraction for IGV.
 
 
+# Repository Structure
 
-# STAR RNA-seq Alignment Pipeline
+```text
+star-rna-seq-alignment-and-visualization/
+│
+├── README.md
+│
+└── scripts/
+    └── star_rna_seq_pipeline.sh
+```
 
-A reproducible workflow for bulk RNA-seq analysis using the **STAR aligner**. This pipeline includes genome indexing, read alignment, post-processing (sorting, indexing, deduplication), and downstream gene-level quantification.
 
+# Workflow Overview
 
-## Overview
-
-This pipeline processes paired-end RNA-seq data through the following stages:
+This workflow processes paired-end RNA-seq data through the following stages:
 
 1. STAR genome index generation
 2. Read alignment
-3. BAM file processing (sorting + indexing)
+3. BAM indexing
 4. Duplicate marking
-5. Format conversion (BAM → BED)
-6. Gene-level read quantification
+5. Alignment quality metrics
+6. BAM to SAM conversion
+7. BAM to BED conversion
+8. Gene-level quantification
+9. Mitochondrial read extraction
+10. Chromosome-specific BAM extraction
+11. IGV visualization
 
 
 # 1. STAR Genome Indexing
 
-The reference genome is indexed using STAR to enable fast and accurate alignment.
+STAR requires a pre-built genome index before reads can be aligned.
 
-Key parameters:
+### Key Parameter
 
-* `sjdbOverhang = read length - 1`
+**sjdbOverhang = read length - 1**
 
-This step builds an indexed genome required for alignment.
+Examples:
+
+* 100 bp reads → 99
+* 150 bp reads → 149
+
+Output:
+
+* STAR genome index directory
 
 
 # 2. Read Alignment
 
-Paired-end FASTQ files are aligned to the reference genome using STAR.
+Paired-end FASTQ files are aligned to the indexed reference genome.
 
-Key features:
+### Features
 
-* Multi-threaded alignment (`runThreadN`)
-* In-memory genome loading for speed (`genomeLoad LoadAndKeep`)
-* Sorted BAM output generation
+* Multi-threaded alignment
+* Coordinate-sorted BAM output
 
 Output:
 
-* Sorted, coordinate-based BAM files
+* Aligned BAM files
+* Alignment metric generation
 
 
 # 3. BAM Processing
 
-Aligned BAM files are processed for downstream compatibility:
+Aligned BAM files are prepared for downstream analyses.
 
-* Sorting (if required)
-* Indexing for fast access
+### Steps
 
-This ensures compatibility with downstream analysis tools.
+* BAM indexing
+* Duplicate marking
 
+Outputs:
 
-# 4. Duplicate Marking
-
-PCR duplicates are identified and optionally removed using Picard.
-
-Outputs include:
-
-* Deduplicated BAM file
-* Duplication metrics report
-
-This improves downstream quantification accuracy.
-
-
-# 5. Format Conversion
-
-BAM files are converted into alternative formats:
-
-* SAM (for inspection)
-* BED (for interval-based analysis)
-
-These formats support downstream genomic coverage analysis.
-
-
-# 6. Gene-Level Quantification
-
-Gene expression is estimated using coverage against annotated gene regions.
-
-This step calculates:
-
-* Read overlap per gene
-* Gene-level coverage statistics
-
-
-## Key Outputs
-
-* Aligned BAM files
 * Indexed BAM files
 * Deduplicated BAM files
+* Alignment summary metrics
+
+
+# 4. Format Conversion
+
+BAM files may be converted into alternative formats for inspection and downstream analyses.
+
+### Supported Conversions
+
+* BAM → SAM
+* BAM → BED
+
+Outputs:
+
+* SAM files
 * BED files
-* Gene coverage tables
+
+
+# 5. Gene-Level Quantification
+
+Read coverage is calculated against annotated gene regions.
+
+Outputs:
+
+* Gene-level read counts
+
+
+# 6. Mitochondrial Read Extraction
+
+Reads overlapping mitochondrial regions can be extracted using a BED file containing mitochondrial coordinates.
+
+Output:
+
+* Mitochondrial BAM files
+
+Applications:
+
+* IGV visualization
+
+
+# 7. Chromosome-Specific BAM Extraction
+
+Reads aligned to a specific chromosome can be isolated for targeted inspection.
+
+Example:
+
+* Chromosome 21 (RefSeq: NC_000021.9)
+
+Output:
+
+* Chromosome-specific BAM files
+
+Applications:
+
+* Coverage inspection
+* Region-specific visualization
+
+
+# 8. Visualization in IGV
+
+Resulting BAM and BAI files can be loaded into IGV for visual inspection of:
+
+* Read coverage
+* Mitochondrial enrichment
+* Chromosome-specific signals
+
+
+# Software Requirements
+
+* STAR
+* samtools
+* Picard
+* bedtools
+* GNU Parallel
+* IGV
